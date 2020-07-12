@@ -1,5 +1,13 @@
 window.onload = function() {
     $('canvas[mathkaga]').each(function(index, element) {
+
+        $(element).attr('title', 'mathkaga is working now.');
+        $(element).tooltip();
+        function changeTitle(title) {
+            $(element).attr('data-original-title', title);
+        }
+        
+
         $(element).attr('id', 'mathkaga_' + index);
         const width = $(element).attr('width') || 200;
         const height = $(element).attr('height') || 200;
@@ -15,24 +23,47 @@ window.onload = function() {
             parseFloat(xMin),
             parseFloat(yMin),
             parseFloat(xMax),
-            parseFloat(yMax)
+            parseFloat(yMax),
+            changeTitle
         );
     });
 }
 class MathKaga{
-    constructor(id, formula, width, height, xMin, yMin, xMax, yMax){
-        this.canvas = document.getElementById(id);
-        this.ctx = this.canvas.getContext("2d");
-        this.changeSize(width, height);
-        this.drawScreen(this.vec2rgb(0, 0, 1));
-        for(let y = 0; y < this.height; y++) {
-            for(let x = 0; x < this.width; x++) {
-                const X = xMin + x * (xMax - xMin) / width;
-                const Y = yMin + y * (yMax - yMin) / height;
-                const color = this.vec2rgb(this.calculateVec(formula, X, Y));
-                this.drawDot(x, y, color);
+    constructor(id, formula, width, height, xMin, yMin, xMax, yMax, changeTitle){
+        const _self = this;
+        _self.canvas = document.getElementById(id);
+        _self.ctx = _self.canvas.getContext("2d");
+        _self.changeSize(width, height);
+        _self.drawScreen(_self.vec2rgb(0, 0, 1));
+        
+        _self.sz = 32;
+        _self.x = 0;
+        _self.y = 0;
+        function render() {
+            for(let count = 0; count < 1000; count++) {
+                if(_self.sz === 0){
+                    changeTitle(formula);
+                    return;
+                }
+                const X = xMin + _self.x * (xMax - xMin) / _self.width;
+                const Y = yMin + _self.y * (yMax - yMin) / _self.height;
+                const color = _self.vec2rgb(_self.calculateVec(formula, X, Y));
+                _self.drawBox(_self.x, _self.y, _self.x + _self.sz, _self.y + _self.sz, color, -1);
+                _self.x += _self.sz;
+                if(_self.x >= _self.width) {
+                    _self.x = 0;
+                    _self.y += _self.sz;
+                }
+                if(_self.y >= _self.height) {
+                    _self.y = 0;
+                    _self.sz = parseInt(_self.sz / 2);
+                    changeTitle(`mathkaga is working now. pitch : ${_self.sz}, ${formula}`);
+                }
             }
+            _self.requestID = window.requestAnimationFrame(render);
+            
         }
+        _self.requestID = window.requestAnimationFrame(render);
     }
     get width() {
         return this.canvas.width;
